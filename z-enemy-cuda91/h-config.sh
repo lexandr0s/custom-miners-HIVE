@@ -15,19 +15,14 @@ if [[ -z $WORKER_NAME ]]; then
 	CUSTOM_TEMPLATE=$(sed "s/%WORKER_NAME%/$WORKER_NAME/g" <<< "$CUSTOM_TEMPLATE")
 fi
 
-json=$(jq -n "{\"_note\": null,\"api-bind\": \"$WEB_PORT:$WEB_HOST\",\"algo\": \"$CUSTOM_ALGO\",\"pools\":[]}")
+conf=$(jq -n "{\"_note\": null,\"pools\":[],\"api-bind\": \"0.0.0.0:4068\",\"algo\": \"$CUSTOM_ALGO\"}")
 
 for (( i=0; i < ${#all_pools[*]}; i++ ))
 do
 	pool=${all_pools[$i]}
-	json=$(echo $json | jq ".pools[.pools | length] |= .+ {\"user\":\"$CUSTOM_TEMPLATE\",\"url\":\"$pool\",\"pass\":\"x\"}")
+	conf=$(echo $conf | jq ".pools[.pools | length] |= .+ {\"user\":\"$CUSTOM_TEMPLATE\",\"url\":\"$pool\",\"pass\":\"x\"}")
 done
 
-echo $json | jq . > $CUSTOM_JSON_FILENAME
-
-
-conf="-c $CUSTOM_JSON_FILENAME $CUSTOM_USER_CONFIG"
 
 [[ -z $CUSTOM_CONFIG_FILENAME ]] && echo -e "${RED}No CUSTOM_CONFIG_FILENAME is set${NOCOLOR}" && return 1
-echo "$conf" > $CUSTOM_CONFIG_FILENAME
-
+echo $conf | jq . > $CUSTOM_CONFIG_FILENAME
